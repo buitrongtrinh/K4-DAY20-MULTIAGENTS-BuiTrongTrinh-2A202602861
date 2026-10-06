@@ -1,0 +1,79 @@
+{
+  "task": "code-eval",
+  "condition": "baseline",
+  "role": "eval",
+  "error": null,
+  "timestamp": "2026-10-06T17:06:30.337529+00:00",
+  "skills_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "seconds": 15.3,
+  "tokens": {
+    "input": 44123,
+    "output": 2170,
+    "total": 46293
+  },
+  "tool_calls": 17,
+  "subagent_calls": 0,
+  "skills_read": 0,
+  "skills_modified": false,
+  "final_message": "All three failing behaviors are fixed and the full suite passes.\n\n## Summary\n\nI fixed three source files in `workspace/bookings/` (no test files were touched):\n\n**`bookings/timeutil.py`** — `parse_duration` only handled the `\"1h30m\"` form, so `\"2h\"`, `\"45m\"`, `\"1:30\"` and bare `\"45\"` all raised `ValueError`. I rewrote it to match each documented format with pre-compiled module-level regexes (hours+optional minutes, minutes-only, `H:MM` clock form, bare minutes), still stripping surrounding whitespace and raising `ValueError` for anything unrecognized.\n\n**`bookings/schedule.py`** — `add_slot` used a mutable default argument (`slots=[]`) and mutated it in place, so calls shared state and the input list was modified. It now defaults to `None` and returns a brand-new list (`[*slots, slot]`), leaving the caller's list untouched.\n\n**`bookings/billing.py`** — `billable_blocks` used `round()`, which rounds to nearest (20 min → 1 block) and silently accepted negatives. It now uses `math.ceil` to always round partial blocks up, and raises `ValueError` for negative `minutes` as the docstring requires.\n\n`bookings/calendar_export.py` was already correct (it delegates to `parse_duration`, which now handles all documented formats). Verified with `python -m pytest tests -q` (3 passed) plus extra checks covering every format, whitespace, invalid inputs, default-argument isolation, and the negative-minutes error.",
+  "score": 0.6363636363636364,
+  "passed": 7,
+  "total": 11,
+  "checks": [
+    {
+      "name": "visible_suite_passes",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "tests_not_modified",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "parse_duration_all_formats",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "other_caller_fixed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "billable_blocks_round_up",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "add_slot_no_shared_state",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "negative_minutes_rejected",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "rule_type_hints",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "name": "rule_regression_tests",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "name": "rule_changelog",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "name": "rule_version_bump",
+      "passed": false,
+      "detail": ""
+    }
+  ]
+}

@@ -7,8 +7,8 @@
 
 - Nhà cung cấp và mô hình: DeepSeek API qua endpoint tương thích OpenAI (`LAB_BASE_URL=https://api.deepseek.com/v1`, `LAB_MODEL=deepseek-chat`; API trả về `model_name = deepseek-flash`). `LAB_TEMPERATURE=0`, `recursion_limit=60` (mặc định, giữ nguyên cho mọi điều kiện).
 - Deep Agents 0.7.21, Python 3.13 (conda env `lab-vin-env`), Fedora Linux (kernel 7.2.5). Chạy trực tiếp trên máy, **shell của tác tử được cách ly bằng bubblewrap** (xem mục 4.1), không dùng Docker.
-- Số lần chạy tác vụ đã dùng / ngân sách: xem mục 7 và Phụ lục.
-- Commit của tag `freeze`: xem `git rev-parse freeze`.
+- Số lần chạy tác vụ đã dùng / ngân sách: 31 lần chạy với DeepSeek (8 lần bị loại do sự cố sandbox ở mục 4.1, 2 lần chạy lại `code-learn` do pycache, 3 lần ở Phần 3.4, 6 lần học, 12 lần sau đóng băng), cộng 2 lần thử với một mô hình free trên OpenRouter (đã bỏ, không dùng trong bảng). Ngân sách gợi ý là 30.
+- Commit của tag `freeze`: `6af3467` (commit `hypotheses` là `c331de4`).
 
 ## 2. Giả thuyết (commit TRƯỚC tag `freeze`, Phần 4.0)
 
@@ -79,20 +79,87 @@ Kết quả Phần 3.4 (`results/skills-auto-dev/`): `code-learn` 10/10 (baselin
 
 ## 7. Kết quả so sánh (Phần 4.3, 4.4)
 
-(điền sau khi chạy tác vụ đánh giá)
+`python -m lab.compare` (`report/table.md`):
+
+| Task | baseline | subagents | skills-auto |
+|---|---|---|---|
+| code-learn | 1/10 | 7/10 | 10/10 |
+| data-learn | 0/8 | 5/8 | 5/8 |
+| logs-learn | 6/9 | 0/9 | 6/9 |
+| code-eval | 7/11 | 1/11 | 1/11 |
+| data-eval | 0/9 | 5/9 | 5/9 |
+| logs-eval | 6/10 | 6/10 | 0/10 |
+| **Mean score - learning tasks** | 0.26 | 0.44 | 0.76 |
+| **Mean score - evaluation tasks** | 0.41 | 0.42 | 0.22 |
+| **Mean tokens per run** | 202,123 | 367,705 | 246,692 |
+| **Runs that read a skill** | 0/6 | 0/6 | 6/6 |
+
+`python scripts/check_breakdown.py`:
+
+```text
+condition     role    technical  house rules  mean tokens  read a skill
+baseline      eval     13/18         0/12         195,667      0/3
+baseline      learn     7/18         0/9          208,580      0/3
+subagents     eval     12/18         0/12         296,445      0/3
+subagents     learn    12/18         0/9          438,965      0/3
+skills-auto   eval      6/18         0/12         309,617      3/3
+skills-auto   learn    18/18         3/9          183,767      3/3
+```
+
+`python scripts/verify_freeze.py`: `checked 6 runs of skill conditions: OK`.
+
+Lần chạy có `error` (đều là `GraphRecursionError` ở `recursion_limit = 60`, không có lỗi hạ tầng): baseline `code-learn`, `data-learn`, `data-eval`; subagents `logs-learn`, `code-eval`; skills-auto `code-eval`, `logs-eval`. Tổng 7/18 lần chạy. Các lần này được giữ nguyên và vẫn chấm trên workspace hiện có, vì đó là hành vi của tác tử (vòng lặp), không phải sự cố API. Không có lần chạy nào có `skills_modified = true`.
+
+Phần 3.4 (cùng bộ skill, trước khi đóng băng, `results/skills-auto-dev/`): `code-learn` 10/10, `data-learn` 0/8, `logs-learn` 0/9, trung bình 0,33.
 
 ## 8. Phân tích
 
-(điền sau khi chạy tác vụ đánh giá)
+1. **Tác vụ học:** cả hai điều kiện đều cao hơn baseline (0,26): subagents 0,44, skills-auto 0,76. **Tác vụ đánh giá:** subagents 0,42 gần như bằng baseline 0,41, còn skills-auto **thấp hơn** (0,22). Như vậy skills-auto cải thiện tác vụ học nhưng không cải thiện tác vụ đánh giá. Đây đúng là dấu hiệu quá khớp mà H3 dự đoán. Tuy nhiên, số liệu cho thấy phần lớn chênh lệch đến từ **vòng lặp thoái hóa**: 2/3 lần chạy đánh giá của skills-auto chạm `recursion_limit` (`code-eval` lặp `pytest | sed -n '1,2p'` 11 lần liên tiếp; `logs-eval` dành 14 lệnh `find / -xdev ...` lục toàn hệ thống tệp để tìm quy ước "Acme"), so với 1/3 của baseline. Lần chạy kết thúc bình thường duy nhất của skills-auto trên tác vụ đánh giá (`data-eval` 5/9) cho điểm bằng subagents và cao hơn baseline (0/9, kẹt vòng lặp). Kết luận: H1 được ủng hộ, H2 bị bác bỏ trên số liệu này, H3 được ủng hộ. Nhưng mức nhiễu (câu 6) lớn hơn hầu hết các chênh lệch.
+
+2. **Kỹ thuật so với quy ước:** skill chỉ giúp **check quy ước của họ `code`**: skills-auto đạt 3/9 check `rule_` trên tác vụ học (cả 3 ở `code-learn`), baseline và subagents đạt 0/9. Trên tác vụ đánh giá, **cả ba điều kiện đều 0/12 check quy ước**. Ba lý do:
+   - (a) Ở `code-eval`, skills-auto kẹt vòng lặp trước khi viết bất kỳ tệp nào, nên ba quy ước đã học (type hints, `tests/test_regressions.py`, `CHANGELOG.md`) không có cơ hội áp dụng.
+   - (b) Với họ `data` và `logs`, skill **không phát biểu cụ thể quy ước**. Ở baseline `data-learn`, `answer.json` không tồn tại nên `rule_money_in_cents` và `rule_meta_block` chỉ có `detail` là `FileNotFoundError`. Curator chưa bao giờ thấy phát biểu của hai quy tắc này. Với `logs`, curator có đủ ba `detail` nhưng **tổng quát hóa quá mức**: `follow-stated-conventions` chỉ giữ "lower-case and replace '-' with '_'" và "integer cents" như ví dụ ("e.g."), bỏ hẳn `schema_version`/`generated_by` và quy tắc sắp xếp.
+   - (c) Mỗi tác vụ đánh giá có một quy ước **mới** (`rule_version_bump`, `rule_sorted_keys_format`, `rule_source_line`). Không điều kiện nào đạt, đúng như dự đoán: curator không thể biết quy tắc chưa từng xuất hiện trong phản hồi.
+
+   Về check kỹ thuật, skills-auto đạt 18/18 trên tác vụ học nhưng chỉ 6/18 trên tác vụ đánh giá. Đây là hệ quả của hai lần chạy kẹt vòng lặp, chứ không phải do skill gây hại cho phần kỹ thuật.
+
+3. **Một check skill giúp đạt:** `rule_regression_tests` và `rule_changelog` ở `code-learn`. Baseline 0/3 check quy ước, skills-auto 3/3 ở cả lần Phần 3.4 lẫn sau đóng băng (`skills_read = 3`). Vết cho thấy tác tử đọc ba `SKILL.md` ngay ở ba lệnh đầu, rồi sau khi sửa ba hàm thì gọi `write_file` tạo `tests/test_regressions.py`, `edit_file` thêm mục dưới `## Unreleased` trong `CHANGELOG.md`, và chạy `python -c "import inspect ..."` để kiểm tra annotation. Các bước này khớp từng dòng của `regression-and-changelog`, và không lần chạy baseline hay subagents nào tự làm.
+   **Một check skill không giúp:** `rule_service_names` ở `logs-learn`. Skill **được đọc** (`skills_read = 3`) nhưng lần chạy sau đóng băng vẫn trượt cả ba check quy ước (6/9, giống baseline). Lý do: quy tắc chỉ xuất hiện như một ví dụ trong ngoặc ở `follow-stated-conventions` ("e.g. lower-case and replace '-' with '_' in names"), không nói áp dụng cho tên service. Tác tử làm theo đề bài, vốn không nhắc quy ước này. Đây là kiểu thất bại "đọc nhưng không làm theo" do skill thiếu cụ thể, đúng như `05_skill_quality.md` mô tả.
+
+4. **Chi phí:** token trung bình mỗi lần chạy là baseline 202 nghìn, subagents 368 nghìn (gấp 1,8 lần), skills-auto 247 nghìn (gấp 1,2 lần). Điểm trên 100 nghìn token ở tác vụ đánh giá: baseline 0,41/1,96 ≈ **0,21**, subagents 0,42/2,96 ≈ 0,14, skills-auto 0,22/3,10 ≈ 0,07. Ở tác vụ học, skills-auto tốt nhất (0,76/1,84 ≈ 0,41, so với 0,12 của baseline). Chi phí bị chi phối bởi vòng lặp: lần chạy chạm `recursion_limit` tốn 200 đến 450 nghìn token, còn lần chạy kết thúc bình thường chỉ 45 đến 100 nghìn (ví dụ baseline `code-eval` 46 nghìn, `logs-eval` 87 nghìn). **Đa tác tử không đáng chi phí** trong thí nghiệm này: không tăng điểm đánh giá, trong khi tốn thêm 50–110% token và thời gian (subagents `code-learn` mất 252 giây so với 62 giây của baseline). Ngoài ra subagent không biết các quy ước Acme hơn tác tử chính.
+
+5. **Rò rỉ và quá khớp:**
+   - Không thấy rò rỉ trong skill: curator chỉ đọc run có `role == "learn"`, `validate_skill` không báo định danh của tác vụ đánh giá, và các tên cụ thể trong skill đều là tên do quy ước yêu cầu.
+   - Rủi ro rò rỉ thật sự nằm ở **harness**: ở lần chạy đầu, tác tử đọc `tasks/*/check.py` qua shell (mục 4.1). Nếu không phát hiện, vết chứa nội dung bộ chấm sẽ đi thẳng vào prompt của curator (curator lấy 6000 ký tự cuối của vết), và skill có thể chứa đáp án. Biện pháp đã dùng: loại các lần chạy đó, cách ly shell bằng `bwrap`, xóa pycache cũ. Sau khi cách ly, tác tử vẫn lục hệ thống tệp (10/18 lần chạy trong bảng có lệnh tìm "acme" hoặc "convention" ngoài workspace) nhưng không còn thấy kho mã nguồn.
+   - Cách ly vẫn chưa hoàn hảo: môi trường Python được bind chỉ đọc, nên ở skills-auto `logs-eval` tác tử đã chạy `cat` một tệp token trong thư mục `etc/` của env conda. Phần đầu ra tương ứng đã bị xóa khỏi `trace.md` trước khi commit.
+   - Về quá khớp: `regression-and-changelog` là skill riêng cho họ `code`, gần như chép nguyên ba `detail`. Nó giúp tác vụ học nhưng không chuyển được sang `code-eval` trong lần chạy này. Khoảng cách skills-auto so với baseline là +0,50 ở tác vụ học và −0,19 ở tác vụ đánh giá.
+
+6. **Nhiễu:** cùng bộ skill, cùng mô hình, ở tác vụ học: Phần 3.4 trung bình 0,33 (10/10, 0/8, 0/9), sau đóng băng 0,76 (10/10, 5/8, 6/9). Chênh lệch **0,43** chỉ do nhiễu: hai lần chạy chuyển từ "kẹt vòng lặp" sang "kết thúc bình thường". Baseline `code-learn` cũng cho 7/10 rồi 1/10 trong hai lần chạy liên tiếp (lần đầu có pycache, `results/_superseded/`). Vậy mọi chênh lệch trung bình dưới khoảng 0,4 trong bảng mục 7 đều **không đáng tin** khi mỗi cấu hình chỉ chạy một lần. Các chênh lệch có thể đọc được là các mẫu lặp lại nhất quán: skill giúp check quy ước họ `code` (đạt ở cả 2 lần chạy `code-learn`), không điều kiện nào đạt check quy ước mới, và subagents tốn nhiều token hơn.
 
 ## 9. Hạn chế và tính hợp lệ
 
-(điền sau khi chạy tác vụ đánh giá)
+1. **Mỗi cấu hình chạy một lần, nhiễu rất lớn.** Chênh lệch giữa hai lần chạy cùng bộ skill là 0,43 điểm trung bình, lớn hơn mọi chênh lệch giữa các điều kiện trên tác vụ đánh giá. Hệ quả: không thể khẳng định điều kiện nào tốt hơn về điểm. Kết luận định lượng chỉ đáng tin ở mức mẫu hành vi lặp lại, không ở mức con số.
+2. **Điểm phản ánh khả năng tránh vòng lặp nhiều hơn tác dụng của skill.** 7/18 lần chạy chính thức dừng ở `recursion_limit = 60` vì DeepSeek ở nhiệt độ 0 lặp lại cùng một lệnh. Lần chạy kẹt mất gần như toàn bộ điểm (kể cả check kỹ thuật), nên một lần kẹt có thể đảo ngược thứ hạng. Tăng `recursion_limit` hoặc thêm phát hiện lặp trong harness sẽ đo tác dụng của skill rõ hơn, nhưng sẽ khác cấu hình chuẩn của lab.
+3. **Chỉ 3 tác vụ mỗi vai trò, do giảng viên thiết kế, chỉ một mô hình.** Mỗi họ chỉ có một cặp học/đánh giá, nên "tổng quát hóa" chỉ được kiểm tra trên một tác vụ mới mỗi họ. Các quy ước Acme được thiết kế để không học được từ đề, nên điểm check quy ước gần như chỉ phụ thuộc vào skill. Kết quả với `deepseek-chat` có thể khác hẳn với mô hình khác: một mô hình free thử trước đó cần khoảng 2 lần số bước, còn DeepSeek thì có xu hướng lục hệ thống tệp và đọc trộm bộ chấm.
+4. **Môi trường thay đổi giữa chừng.** Cách ly `bwrap` được thêm sau lần chạy đầu. Mọi kết quả trong bảng đều chạy sau khi cách ly, nhưng các run bị loại cho thấy khi không cách ly, điểm tăng giả (8/8, 9/9). `__pycache__` (bị gitignore) xuất hiện lại trong `tasks/code-*/workspace` từ khoảng 17:01 UTC, nên các lần chạy họ `code` sau đó có tệp `.pyc` trong workspace. Vết của các lần chạy trong bảng không có dấu hiệu dịch ngược `.pyc` (0 lần nhắc `marshal`/`.pyc`), nên ảnh hưởng có vẻ nhỏ. Ba điều kiện sau đóng băng chạy song song; không thấy lỗi giới hạn tốc độ.
+5. **Curator chỉ học được từ phản hồi nó nhìn thấy.** Hai quy tắc của `data` không có `detail` dạng `RULE:` vì baseline không tạo `answer.json`, nên chất lượng skill phụ thuộc vào việc lần chạy baseline có kết thúc hay không. Đây là một nguồn nhiễu khác của thí nghiệm self-evolving.
 
 ## 10. Kết luận
 
-(điền sau khi chạy tác vụ đánh giá)
+Với `deepseek-chat`, không điều kiện nào cải thiện rõ rệt điểm trên tác vụ đánh giá: baseline 0,41, subagents 0,42, skills-auto 0,22. Mức nhiễu đo được (0,43 giữa hai lần chạy cùng bộ skill) lớn hơn các chênh lệch này. Skill do curator sinh giúp chắc chắn ở đúng chỗ phản hồi đủ cụ thể (3/3 check quy ước họ `code` ở tác vụ học, lặp lại trong 2 lần chạy), nhưng không giúp quy ước mới, và bị vô hiệu bởi vòng lặp thoái hóa. Đa tác tử tốn thêm khoảng 1,8 lần token mà không tăng điểm. Phát hiện quan trọng nhất là về harness: khi shell không được cách ly ở mức hệ điều hành, tác tử đọc trộm `check.py` và tự chấm điểm. Đề xuất tiếp theo: thêm phát hiện lặp lệnh vào harness (dừng hoặc nhắc tác tử khi cùng một tool call lặp lại nhiều lần) và chạy mỗi cấu hình ít nhất 3 lần (hướng 6e), để tách tác dụng của skill khỏi nhiễu.
 
 ## Phụ lục
 
-- Lệnh đã chạy: xem `results/commands.log`.
+- Lệnh đã chạy (theo thứ tự, kèm thời gian UTC và kết quả): `results/commands.log`. Tóm tắt:
+  1. `pip install -e .`, `pytest` (32 passed), `python scripts/tour.py`
+  2. `python -m lab.runner --condition baseline --tasks learn`; `--condition subagents --tasks learn` (lần đầu, bị loại do sandbox escape)
+  3. Thêm `IsolatedShellBackend` (`bwrap`), chạy lại `baseline` và `subagents` trên tác vụ học; `git clean -fdX tasks/`; chạy lại `code-learn` cho cả hai điều kiện
+  4. `python -m lab.curator`; `python -m lab.runner --condition skills-auto --tasks <từng tác vụ học>` (song song); `mv results/skills-auto results/skills-auto-dev`
+  5. `git commit -m hypotheses`; `git commit --allow-empty -m "freeze skills" && git tag freeze`
+  6. `python -m lab.runner --condition baseline --tasks eval`, `--condition subagents --tasks eval`, `--condition skills-auto --tasks all` (ba điều kiện song song)
+  7. `python scripts/verify_freeze.py` (OK), `python -m lab.compare > report/table.md`, `python scripts/check_breakdown.py`
+- Thay đổi so với pseudo-code (chỉ trong các hàm TODO):
+  - (a) `run_task` dùng `agent.stream(..., stream_mode="values")` thay cho `invoke` để vẫn có vết khi `GraphRecursionError` (mở rộng gợi ý ở `03_runner.md`, mục 8).
+  - (b) `make_backend` dùng `IsolatedShellBackend` (bọc `execute` bằng `bwrap`) khi máy có `bwrap`, nếu không thì dùng `LocalShellBackend` như pseudo-code.
+- Thư mục kết quả phụ (không được `lab.compare` đọc): `results/skills-auto-dev/` (Phần 3.4), `results/_superseded/` (hai lần chạy `code-learn` bị nhiễu pycache), `results/baseline-nemotron-free/` (lần thử mô hình free trên OpenRouter, không dùng).
+- Thử thách mở rộng: không thực hiện.

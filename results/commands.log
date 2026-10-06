@@ -31,3 +31,16 @@ wrote /home/buitrongtrinh/learns/K4-DAY20-MULTIAGENTS-BuiTrongTrinh-2A202602861/
 skills-auto   code-learn  score=10/10 tokens=92103 calls=24 23.7s
 skills-auto   data-learn  score=0/8 tokens=397144 calls=33 35.8s ERROR=GraphRecursionError: Recursion limit of 60 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
 skills-auto   logs-learn  score=0/9 tokens=299199 calls=32 30.3s ERROR=GraphRecursionError: Recursion limit of 60 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+=== 2026-10-06T17:06:26Z after freeze: baseline eval | subagents eval | skills-auto all (3 conditions in parallel)
+baseline      code-eval   score=7/11 tokens=46293 calls=17 15.3s
+baseline      data-eval   score=0/9 tokens=453912 calls=32 33.4s ERROR=GraphRecursionError: Recursion limit of 60 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+baseline      logs-eval   score=6/10 tokens=86796 calls=13 15.7s
+skills-auto   code-eval   score=1/11 tokens=237547 calls=39 57.3s ERROR=GraphRecursionError: Recursion limit of 60 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+skills-auto   code-learn  score=10/10 tokens=102262 calls=26 26.6s
+skills-auto   data-eval   score=5/9 tokens=293511 calls=25 29.4s
+skills-auto   data-learn  score=5/8 tokens=255579 calls=28 35.0s
+skills-auto   logs-eval   score=0/10 tokens=397795 calls=32 35.1s ERROR=GraphRecursionError: Recursion limit of 60 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+skills-auto   logs-learn  score=6/9 tokens=193461 calls=17 20.3s
+subagents     code-eval   score=1/11 tokens=214266 calls=38 74.4s ERROR=GraphRecursionError: Recursion limit of 60 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+subagents     data-eval   score=5/9 tokens=319994 calls=18 52.4s
+subagents     logs-eval   score=6/10 tokens=355075 calls=12 61.6s
