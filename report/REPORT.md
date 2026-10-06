@@ -2,7 +2,7 @@
 
 ## 1. Thông tin sinh viên và cấu hình
 
-- Họ tên: Bùi Trọng Trình
+- Họ tên: Bùi Trọng Trịnh
 - Mã sinh viên: 2A202602861
 
 - Nhà cung cấp và mô hình: DeepSeek API qua endpoint tương thích OpenAI (`LAB_BASE_URL=https://api.deepseek.com/v1`, `LAB_MODEL=deepseek-chat`; API trả về `model_name = deepseek-flash`). `LAB_TEMPERATURE=0`, `recursion_limit=60` (mặc định, giữ nguyên cho mọi điều kiện).
