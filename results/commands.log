@@ -1,0 +1,33 @@
+=== 2026-10-06T16:40:30Z baseline learn
+baseline      code-learn  score=7/10 tokens=42661 calls=16 14.0s
+baseline      data-learn  score=8/8 tokens=283755 calls=21 28.3s
+baseline      logs-learn  score=9/9 tokens=407476 calls=31 69.3s
+=== 2026-10-06T16:42:36Z subagents learn
+subagents     code-learn  score=1/10 tokens=438677 calls=0 35.1s ERROR=GraphRecursionError: Recursion limit of 60 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+For troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT
+subagents     data-learn  score=8/8 tokens=672413 calls=29 84.6s
+subagents     logs-learn  score=0/9 tokens=400719 calls=0 64.1s ERROR=GraphRecursionError: Recursion limit of 60 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+For troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT
+=== 2026-10-06T16:46:23Z subagents code-learn logs-learn (rerun with stream-based run_task; attempt1 kept in results/subagents-attempt1)
+subagents     code-learn  score=1/10 tokens=373778 calls=37 36.4s ERROR=GraphRecursionError: Recursion limit of 60 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+subagents     logs-learn  score=0/9 tokens=401726 calls=32 39.0s ERROR=GraphRecursionError: Recursion limit of 60 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+=== NOTE: earlier baseline/subagents runs discarded (agent escaped sandbox and read tasks/*/check.py); shell now isolated with bwrap
+=== 2026-10-06T16:49:26Z baseline learn
+baseline      code-learn  score=7/10 tokens=52023 calls=18 14.9s
+baseline      data-learn  score=0/8 tokens=323760 calls=31 31.2s ERROR=GraphRecursionError: Recursion limit of 60 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+baseline      logs-learn  score=6/9 tokens=84564 calls=11 15.7s
+=== 2026-10-06T16:50:33Z subagents learn
+subagents     code-learn  score=1/10 tokens=354345 calls=37 36.2s ERROR=GraphRecursionError: Recursion limit of 60 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+subagents     data-learn  score=5/8 tokens=327250 calls=15 65.0s
+subagents     logs-learn  score=0/9 tokens=553478 calls=32 32.7s ERROR=GraphRecursionError: Recursion limit of 60 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+=== 2026-10-06T16:53:31Z rerun code-learn baseline+subagents after removing stale __pycache__ from tasks/ (git clean -fdX tasks/)
+baseline      code-learn  score=1/10 tokens=217417 calls=37 61.5s ERROR=GraphRecursionError: Recursion limit of 60 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+subagents     code-learn  score=7/10 tokens=436168 calls=22 252.3s
+=== 2026-10-06T17:03:11Z python -m lab.curator
+wrote /home/buitrongtrinh/learns/K4-DAY20-MULTIAGENTS-BuiTrongTrinh-2A202602861/skills/auto/verify-before-finish/SKILL.md
+wrote /home/buitrongtrinh/learns/K4-DAY20-MULTIAGENTS-BuiTrongTrinh-2A202602861/skills/auto/follow-stated-conventions/SKILL.md
+wrote /home/buitrongtrinh/learns/K4-DAY20-MULTIAGENTS-BuiTrongTrinh-2A202602861/skills/auto/regression-and-changelog/SKILL.md
+=== 2026-10-06T17:03:29Z skills-auto learn (Phần 3.4, parallel per task)
+skills-auto   code-learn  score=10/10 tokens=92103 calls=24 23.7s
+skills-auto   data-learn  score=0/8 tokens=397144 calls=33 35.8s ERROR=GraphRecursionError: Recursion limit of 60 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+skills-auto   logs-learn  score=0/9 tokens=299199 calls=32 30.3s ERROR=GraphRecursionError: Recursion limit of 60 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.

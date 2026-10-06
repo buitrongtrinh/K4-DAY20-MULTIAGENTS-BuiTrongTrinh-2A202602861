@@ -1,0 +1,74 @@
+{
+  "task": "code-learn",
+  "condition": "skills-auto",
+  "role": "learn",
+  "error": null,
+  "timestamp": "2026-10-06T17:03:33.390357+00:00",
+  "skills_sha256": "77f92cdcfed45c5dc53cf7ce40ed2096572ba540a65e45784c52a52777fba3f1",
+  "seconds": 23.7,
+  "tokens": {
+    "input": 89122,
+    "output": 2981,
+    "total": 92103
+  },
+  "tool_calls": 24,
+  "subagent_calls": 0,
+  "skills_read": 3,
+  "skills_modified": false,
+  "final_message": "All checks pass. Summary of changes:\n\n**`inventory/pricing.py`**\n- `parse_price`: now strips thousands separators (`\"$1,299.50\"` → `Decimal(\"1299.50\")`) and handles accounting-style parentheses (`\"(12.00)\"` → `Decimal(\"-12.00\")`), as the docstring specifies.\n- `apply_discount`: quantizes with `ROUND_HALF_UP` instead of the default banker's rounding, so `0.005` rounds up (`10.05` − 10% → `9.05`).\n- Added type annotations to both public functions.\n\n**`inventory/report.py`**\n- `low_stock`: uses a strict `<` comparison (was `<=`) and sorts names alphabetically ignoring case (was unsorted), matching the docstring.\n- `total_value`: annotated parameters/return type.\n\n**`inventory/export.py`**\n- `to_csv_row`: implements RFC 4180 quoting — names containing a comma or double quote are wrapped in quotes with inner quotes doubled.\n- Annotated parameters/return type.\n\n**`tests/test_regressions.py`** (new): 9 regression tests covering each fix (thousands separator, accounting negatives, whitespace, half-up rounding, strict threshold, case-insensitive sort, CSV quoting/doubling, total with separators).\n\n**`CHANGELOG.md`**: added 4 `- fix(<function>): ...` bullets under `## Unreleased`, one per fix.\n\nVerification: `python -m pytest tests -q` → **15 passed**; `tests/test_regressions.py` alone → **9 passed**; all public functions carry parameter and return annotations.",
+  "score": 1.0,
+  "passed": 10,
+  "total": 10,
+  "checks": [
+    {
+      "name": "visible_suite_passes",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "tests_not_modified",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "parse_price_all_formats",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "other_caller_fixed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "discount_rounds_half_up",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "low_stock_follows_docstring",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "csv_quoting_follows_docstring",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "rule_type_hints",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "rule_regression_tests",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "rule_changelog",
+      "passed": true,
+      "detail": ""
+    }
+  ]
+}
